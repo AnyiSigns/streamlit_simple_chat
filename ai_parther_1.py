@@ -139,7 +139,7 @@ with st.sidebar:
                     load_sessions(session)
                     st.rerun()
             with col2:
-                if st.button("🚮", key=f"delete_{session}"):
+                if st.button("🚮",width = "stretch", key=f"delete_{session}"):
                     delects_session(session)
     else:
         st.caption("OMG！！！")
