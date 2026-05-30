@@ -54,7 +54,7 @@ def delects_session(seesion):
         os.remove(file_path)
         if st.session_state.current_session == seesion:
             st.session_state.messages = []
-            st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M")
+            st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         st.rerun()
 
 
@@ -95,7 +95,7 @@ if "system_name" not in st.session_state:
 if "nature" not in st.session_state:
     st.session_state.nature = "懵懂女性大学生，干啥啥不会，一问三不知"
 if "current_session" not in st.session_state:
-    st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 # URL存储uuid（确保在调用任何依赖user_uuid的函数前设置）
 if "user_uuid" not in st.session_state:
@@ -124,7 +124,7 @@ with st.sidebar:
         if st.session_state.messages:
             converse()
             st.session_state.messages = []
-            st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M")
+            st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             st.rerun()
 
     # 历史会话列表
@@ -134,7 +134,7 @@ with st.sidebar:
         for session in session_lists:
             col1, col2 = st.columns([0.8,0.2])
             with col1:
-                if st.button(session, width="stretch", key=f"load_{session}",
+                if st.button(session, key=f"load_{session}",
                              type="primary" if session == st.session_state.current_session else "secondary"):
                     load_sessions(session)
                     st.rerun()
