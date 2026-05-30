@@ -132,14 +132,14 @@ with st.sidebar:
     session_lists = load_session()
     if session_lists:
         for session in session_lists:
-            col1, col2 = st.columns([6,1])
+            col1, col2 = st.columns([5,2])
             with col1:
                 if st.button(session, width="stretch", key=f"load_{session}",
                              type="primary" if session == st.session_state.current_session else "secondary"):
                     load_sessions(session)
                     st.rerun()
             with col2:
-                if st.button("🚮", width="stretch", key=f"delete_{session}"):
+                if st.button("🚮", key=f"delete_{session}"):
                     delects_session(session)
     else:
         st.caption("OMG！！！")
