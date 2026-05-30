@@ -84,7 +84,7 @@ client = OpenAI(
 # 系统提示词
 system_set = ("""
 你叫%s
-是一名%s的ai伴侣
+是%，现在是用户的ai伴侣
 """)
 
 # 初始化 session_state
