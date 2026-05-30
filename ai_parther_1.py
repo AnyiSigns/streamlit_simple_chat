@@ -132,7 +132,7 @@ with st.sidebar:
     session_lists = load_session()
     if session_lists:
         for session in session_lists:
-            col1, col2 = st.columns([5,1])
+            col1, col2 = st.columns([0.8,0.2])
             with col1:
                 if st.button(session,width = "stretch", key=f"load_{session}",
                              type="primary" if session == st.session_state.current_session else "secondary"):
