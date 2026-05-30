@@ -5,7 +5,7 @@ import os
 from openai import OpenAI
 from datetime import datetime
 import json
-
+import uuid
 # ==================== 页面配置 ====================
 st.set_page_config(
     page_title="诶喂",
@@ -15,68 +15,73 @@ st.set_page_config(
     menu_items={}
 )
 
+# 获取用户目录
+def get_user_dir():
+    user_id = st.session_state.user_uuid
+    user_dir = os.path.join("sessions", user_id)
+    if not os.path.exists(user_dir):
+        os.makedirs(user_dir, exist_ok=True)
+    return user_dir
 
-# ==================== 函数定义区 ====================
-
-# 1. 加载指定会话
+#加载指定会话
 def load_sessions(session_name):
     try:
-        if os.path.exists("./sessions"):
-            with open(f"./sessions/{session_name}.json", "r", encoding="utf-8") as f:
-                load_name = json.load(f)
-                st.session_state.messages = load_name["message"]
-                st.session_state.system_name = load_name["system_name"]
-                st.session_state.nature = load_name["nature"]
-                st.session_state.current_session = session_name
+        user_dir = get_user_dir()
+        file_path = os.path.join(user_dir, f"{session_name}.json")
+        with open(file_path, "r", encoding="utf-8") as f:
+            load_name = json.load(f)
+            st.session_state.messages = load_name["message"]
+            st.session_state.system_name = load_name["system_name"]
+            st.session_state.nature = load_name["nature"]
+            st.session_state.current_session = session_name
     except Exception:
         st.error("加载失败")
 
 
-# 2. 获取所有历史会话列表（倒序）
+#获取所有历史会话列表
 def load_session():
-    session_list = []
-    if os.path.exists("sessions"):
-        file_list = os.listdir("sessions")
-        for file_name in file_list:
-            if file_name.endswith(".json"):
-                session_list.append(file_name[:-5:])
-    return session_list[::-1]
+    user_dir = get_user_dir()
+    if not os.path.exists(user_dir):
+        return []
+    file_list = [f[:-5] for f in os.listdir(user_dir) if f.endswith(".json")]
+    return sorted(file_list, reverse=True)
 
-
-# 3. 删除会话
+#删除会话
 def delects_session(seesion):
-    if os.path.exists(f"./sessions/{seesion}.json"):
-        remove(f"./sessions/{seesion}.json")
+    user_dir = get_user_dir()
+    file_path = os.path.join(user_dir, f"{seesion}.json")
+    if os.path.exists(file_path):
+        os.remove(file_path)
         if st.session_state.current_session == seesion:
             st.session_state.messages = []
             st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         st.rerun()
 
 
-# 4. 保存当前会话到文件
+# 保存当前会话到文件
 def converse():
-    if st.session_state.current_session:
-        session_data = {
-            "system_name": st.session_state.system_name,
-            "nature": st.session_state.nature,
-            "current_session": st.session_state.current_session,
-            "message": st.session_state.messages
-        }
-    if not os.path.exists("sessions"):
-        os.mkdir("sessions")
-    with open(f"sessions/{st.session_state.current_session}.json", "w", encoding="utf-8") as f:
+    if not st.session_state.current_session:
+        return
+    session_data = {
+        "system_name": st.session_state.system_name,
+        "nature": st.session_state.nature,
+        "current_session": st.session_state.current_session,
+        "message": st.session_state.messages
+    }
+    user_dir = get_user_dir()
+    file_path = os.path.join(user_dir, f"{st.session_state.current_session}.json")
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(session_data, f, ensure_ascii=False, indent=2)
-
 
 # ==================== 初始化配置 ====================
 
-# AI客户端
+#ai部署
 client = OpenAI(
     api_key=os.environ.get('DEEPSEEK_API_KEY') or st.secrets.get("DEEPSEEK_API_KEY"),
     base_url="https://api.deepseek.com"
 )
 
-# 系统提示词模板
+# 系统提示词
 system_set = ("""
 你叫%s
 是一名%s的ai伴侣
@@ -91,6 +96,17 @@ if "nature" not in st.session_state:
     st.session_state.nature = "懵懂女性大学生，干啥啥不会，一问三不知"
 if "current_session" not in st.session_state:
     st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+# URL存储uuid（确保在调用任何依赖user_uuid的函数前设置）
+if "user_uuid" not in st.session_state:
+    params = st.query_params
+    if "user_uuid" in params:
+        st.session_state.user_uuid = params["user_uuid"]
+    else:
+        new_uuid = str(uuid.uuid4())
+        st.query_params["user_uuid"] = new_uuid
+        st.session_state.user_uuid = new_uuid
+        st.rerun()
 
 # ==================== 主界面渲染 ====================
 
@@ -110,7 +126,6 @@ with st.sidebar:
             st.session_state.messages = []
             st.session_state.current_session = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             st.rerun()
-            converse()
 
     # 历史会话列表
     st.subheader("历史会话🛐")
@@ -128,6 +143,7 @@ with st.sidebar:
                     delects_session(session)
     else:
         st.caption("OMG！！！")
+
     #分割线
     st.divider()
     # 虚拟人格设置
